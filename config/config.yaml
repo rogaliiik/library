@@ -1,0 +1,19 @@
+http:
+  port: 8080
+
+postgres:
+  username: postgres
+  password: qwerty123456
+  db_name: postgres
+  host: localhost
+  port: 5432
+
+
+log:
+  level: dev
+
+jwt:
+  salt: salt
+  sign_key: sign_key
+  token_ttl: 12h
+
