@@ -9,6 +9,7 @@ import (
 
 	"github.com/rogaliiik/library/config"
 	"github.com/rogaliiik/library/internal/repository"
+	"github.com/rogaliiik/library/internal/service"
 )
 
 func Run(configPath string) {
@@ -26,9 +27,11 @@ func Run(configPath string) {
 	db, err := connectPostgres(cfg.Postgres)
 	slog.Info("Postgres was inited")
 
-	_ = repository.NewRepository(db)
+	repos := repository.NewRepository(db)
 	slog.Info("Repositories was inited")
 
+	_ = service.NewServices(repos, cfg.Salt, cfg.SignKey, cfg.TokenTTL)
+	slog.Info("Services was inited")
 }
 
 func connectPostgres(cfg config.Postgres) (*sql.DB, error) {
