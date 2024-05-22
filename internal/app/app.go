@@ -1,15 +1,22 @@
 package app
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
+	"log/slog"
+	"os"
+	"os/signal"
+	"syscall"
 
 	_ "github.com/lib/pq"
 
 	"github.com/rogaliiik/library/config"
+	v1 "github.com/rogaliiik/library/internal/handler/http/v1"
 	"github.com/rogaliiik/library/internal/repository"
 	"github.com/rogaliiik/library/internal/service"
+	"github.com/rogaliiik/library/pkg/http_server"
 )
 
 func Run(configPath string) {
@@ -17,21 +24,50 @@ func Run(configPath string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	slog, err := NewLogger(cfg.Log.Level)
+	log.Println(cfg)
+	logger, err := NewLogger(cfg.Log.Level)
 	if err != nil {
 		log.Fatal(err)
 	}
-	slog.Info("Logger was inited")
+	logger.Debug("Logger was inited")
 
 	db, err := connectPostgres(cfg.Postgres)
-	slog.Info("Postgres was inited")
+	if err != nil {
+		logger.Error("Postgres connection error", slog.Any("message", err.Error()))
+		os.Exit(1)
+	}
+	defer db.Close()
+	logger.Debug("Postgres was inited")
 
 	repos := repository.NewRepository(db)
-	slog.Info("Repositories was inited")
+	logger.Debug("Repositories was inited")
 
-	_ = service.NewServices(repos, cfg.Salt, cfg.SignKey, cfg.TokenTTL)
-	slog.Info("Services was inited")
+	services := service.NewServices(repos, cfg.Salt, cfg.SignKey, cfg.TokenTTL)
+	logger.Debug("Services was inited")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	router := v1.NewHandler(ctx, services, logger).InitRoutes()
+	logger.Debug("Handlers was inited")
+
+	httpServer := http_server.New(router, cfg.Http.Port)
+	logger.Debug(fmt.Sprintf("Http server was started at port: %s", cfg.Http.Port))
+
+	notify := make(chan os.Signal, 1)
+	signal.Notify(notify, os.Interrupt, syscall.SIGTERM)
+
+	select {
+	case <-notify:
+		logger.Debug("Stop signal received")
+	case <-httpServer.Notify():
+		logger.Error("Server running error", slog.Any("message", err))
+	}
+
+	err = httpServer.Shutdown()
+	if err != nil {
+		logger.Error("Error while shutting down the server", slog.Any("message", err.Error()))
+	}
 }
 
 func connectPostgres(cfg config.Postgres) (*sql.DB, error) {

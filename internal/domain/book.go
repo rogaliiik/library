@@ -1,4 +1,4 @@
-package model
+package domain
 
 import "time"
 
@@ -17,6 +17,6 @@ type BookUpdateInput struct {
 	Author  string `json:"author"`
 }
 
-func (U *Book) Validate(book *Book) error {
-	return validate.Struct(book)
+func (b *Book) Validate() error {
+	return validate.Struct(b)
 }

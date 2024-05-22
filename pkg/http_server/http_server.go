@@ -2,6 +2,7 @@ package http_server
 
 import (
 	"context"
+	"net"
 	"net/http"
 	"time"
 )
@@ -18,7 +19,9 @@ type Server struct {
 	shutdownTimeout time.Duration
 }
 
-func New(handler http.Handler, addr string) *Server {
+func New(handler http.Handler, port string) *Server {
+	addr := net.JoinHostPort("", port)
+
 	httpServer := &http.Server{
 		Addr:         addr,
 		Handler:      handler,
@@ -43,7 +46,11 @@ func (s *Server) start() {
 	}()
 }
 
-func (s *Server) shutdown() error {
+func (s *Server) Notify() chan error {
+	return s.notify
+}
+
+func (s *Server) Shutdown() error {
 	ctx, cancel := context.WithTimeout(context.Background(), s.shutdownTimeout)
 	defer cancel()
 

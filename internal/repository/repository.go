@@ -4,19 +4,19 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/rogaliiik/library/internal/model"
+	"github.com/rogaliiik/library/internal/domain"
 )
 
 type Auth interface {
-	CreateUser(context.Context, *model.User) (int, error)
-	GetUser(ctx context.Context, username, password string) (model.User, error)
+	CreateUser(context.Context, *domain.User) (int, error)
+	GetUser(ctx context.Context, username, password string) (domain.User, error)
 }
 
 type Book interface {
-	GetAll(ctx context.Context, userId int) ([]model.Book, error)
-	GetById(ctx context.Context, bookId, userId int) (model.Book, error)
-	Create(ctx context.Context, book *model.Book) (int, error)
-	Update(ctx context.Context, bookId, userId int, bookUpdateInput *model.BookUpdateInput) error
+	GetAll(ctx context.Context, userId int) ([]domain.Book, error)
+	GetById(ctx context.Context, bookId, userId int) (domain.Book, error)
+	Create(ctx context.Context, book *domain.Book) (int, error)
+	Update(ctx context.Context, bookId, userId int, bookUpdateInput *domain.BookUpdateInput) error
 	Delete(ctx context.Context, bookId, userId int) error
 }
 
