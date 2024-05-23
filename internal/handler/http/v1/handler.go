@@ -2,9 +2,12 @@ package v1
 
 import (
 	"context"
-	"github.com/go-chi/chi/v5"
-	"github.com/rogaliiik/library/internal/service"
 	"log/slog"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+
+	"github.com/rogaliiik/library/internal/service"
 )
 
 type Handler struct {
@@ -23,6 +26,11 @@ func NewHandler(ctx context.Context, service *service.Service, log *slog.Logger)
 
 func (h *Handler) InitRoutes() chi.Router {
 	r := chi.NewRouter()
+
+	r.Use(middleware.Recoverer)
+	//r.Use(middleware.Logger)
+	r.Use(h.requestIdMiddleware)
+	r.Use(h.logRequestMiddleware)
 
 	r.Group(func(r chi.Router) {
 		r.Route("/auth", func(r chi.Router) {

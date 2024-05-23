@@ -16,7 +16,7 @@ func sendErrorResponse(w http.ResponseWriter, code int, message string) {
 }
 
 func sendJsonResponse(w http.ResponseWriter, code int, message any) {
-	w.Header().Set("Content-Type", "application/json")
+	//w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	json.NewEncoder(w).Encode(message)
 }
