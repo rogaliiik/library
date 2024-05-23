@@ -6,7 +6,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	httpSwagger "github.com/swaggo/http-swagger"
 
+	_ "github.com/rogaliiik/library/docs"
 	"github.com/rogaliiik/library/internal/service"
 )
 
@@ -32,21 +34,25 @@ func (h *Handler) InitRoutes() chi.Router {
 	r.Use(h.requestIdMiddleware)
 	r.Use(h.logRequestMiddleware)
 
-	r.Group(func(r chi.Router) {
+	r.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
+	))
+
+	r.Route("/v1", func(r chi.Router) {
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/sign-in", h.signIn)
 			r.Post("/sign-up", h.signUp)
 		})
-	})
 
-	r.Group(func(r chi.Router) {
-		r.Use(h.userVerifyMiddleware)
-		r.Route("/book", func(r chi.Router) {
-			r.Post("/", h.createBook)
-			r.Get("/{bookId}", h.getBookById)
-			r.Get("/", h.getAllBooks)
-			r.Put("/{bookId}", h.updateBook)
-			r.Delete("/{bookId}", h.deleteBook)
+		r.Group(func(r chi.Router) {
+			r.Use(h.userVerifyMiddleware)
+			r.Route("/book", func(r chi.Router) {
+				r.Post("/", h.createBook)
+				r.Get("/{bookId}", h.getBookById)
+				r.Get("/", h.getAllBooks)
+				r.Put("/{bookId}", h.updateBook)
+				r.Delete("/{bookId}", h.deleteBook)
+			})
 		})
 	})
 

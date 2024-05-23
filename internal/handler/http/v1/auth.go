@@ -11,6 +11,17 @@ type signUpOutput struct {
 	Id int `json:"id"`
 }
 
+// @Summary User SignUp
+// @Tags user-auth
+// @Description user sign up
+// @ModuleID signUp
+// @Accept  json
+// @Produce  json
+// @Param input body domain.User true "user info"
+// @Success 201 {object} signUpOutput
+// @Failure 400 {object} errorMessage
+// @Failure 500 {object} errorMessage
+// @Router /v1/auth/sign-up [post]
 func (h *Handler) signUp(w http.ResponseWriter, r *http.Request) {
 	var input *domain.User
 	err := json.NewDecoder(r.Body).Decode(&input)
@@ -37,6 +48,17 @@ type signInOutput struct {
 	Token string `json:"token"`
 }
 
+// @Summary User SignIn
+// @Tags user-auth
+// @Description user sign in
+// @ModuleID signIn
+// @Accept  json
+// @Produce  json
+// @Param input body domain.User true "user info"
+// @Success 200 {object} signInOutput
+// @Failure 400 {object} errorMessage
+// @Failure 500 {object} errorMessage
+// @Router /v1/auth/sign-in [post]
 func (h *Handler) signIn(w http.ResponseWriter, r *http.Request) {
 	var input *domain.User
 	err := json.NewDecoder(r.Body).Decode(&input)

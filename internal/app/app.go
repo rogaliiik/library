@@ -19,17 +19,29 @@ import (
 	"github.com/rogaliiik/library/pkg/http_server"
 )
 
+// @title LibraryAPI
+// @version 1.0
+// @description API for Library app.
+
+// @securityDefinitions.apikey UserAuth
+// @in header
+// @name Authorization
+
+// @host localhost:8080
+// @BasePath /
+
 func Run(configPath string) {
 	cfg, err := config.NewConfig(configPath)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println(cfg)
+
 	logger, err := NewLogger(cfg.Log.Level)
 	if err != nil {
 		log.Fatal(err)
 	}
 	logger.Debug("Logger was inited")
+	logger.Debug("Parsed config", slog.Any("config", cfg))
 
 	db, err := connectPostgres(cfg.Postgres)
 	if err != nil {

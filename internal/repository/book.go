@@ -30,8 +30,15 @@ func (r *BookRepository) GetAll(ctx context.Context, userId int) ([]domain.Book,
 		}
 		books = append(books, book)
 	}
+	if err = rows.Err(); err != nil {
+		return nil, rows.Err()
+	}
 
-	return books, rows.Err()
+	if len(books) == 0 {
+		return nil, sql.ErrNoRows
+	}
+
+	return books, nil
 }
 
 func (r *BookRepository) GetById(ctx context.Context, bookId, userId int) (domain.Book, error) {
