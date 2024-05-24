@@ -17,7 +17,17 @@ const (
 	logTemplate = "library-%s.log"
 )
 
-func NewLogger(logLevel string) (*slog.Logger, error) {
+type Logger struct {
+	*slog.Logger
+}
+
+func (l *Logger) Fatal(msg string, err error, args ...any) {
+	args = append(args, slog.Any("error", err.Error()))
+	l.Error(msg, args...)
+	os.Exit(1)
+}
+
+func NewLogger(logLevel string) (*Logger, error) {
 	var logger *slog.Logger
 	switch logLevel {
 	case prod:
@@ -34,7 +44,7 @@ func NewLogger(logLevel string) (*slog.Logger, error) {
 		)
 	}
 
-	return logger, nil
+	return &Logger{logger}, nil
 }
 
 func createLogFile() (*os.File, error) {

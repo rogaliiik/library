@@ -5,11 +5,11 @@ postgres:
   username: postgres
   password: qwerty123456
   db_name: postgres
-  host: localhost
+  host: db
   port: 5432
 
 log:
-  level: dev
+  level: prod
 
 jwt:
   salt: salt

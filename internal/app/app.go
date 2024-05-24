@@ -10,6 +10,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
 
 	"github.com/rogaliiik/library/config"
@@ -45,11 +48,14 @@ func Run(configPath string) {
 
 	db, err := connectPostgres(cfg.Postgres)
 	if err != nil {
-		logger.Error("Postgres connection error", slog.Any("message", err.Error()))
-		os.Exit(1)
+		logger.Fatal("Postgres connection error", err)
 	}
 	defer db.Close()
 	logger.Debug("Postgres was inited")
+
+	if err = migratePostgres(db); err != nil {
+		logger.Fatal("Migrations error", err)
+	}
 
 	repos := repository.NewRepository(db)
 	logger.Debug("Repositories was inited")
@@ -60,11 +66,11 @@ func Run(configPath string) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	router := v1.NewHandler(ctx, services, logger).InitRoutes()
+	router := v1.NewHandler(ctx, services, logger.Logger).InitRoutes()
 	logger.Debug("Handlers was inited")
 
 	httpServer := http_server.New(router, cfg.Http.Port)
-	logger.Debug(fmt.Sprintf("Http server was started at port: %s", cfg.Http.Port))
+	logger.Info(fmt.Sprintf("Http server was started at port: %s", cfg.Http.Port))
 
 	notify := make(chan os.Signal, 1)
 	signal.Notify(notify, os.Interrupt, syscall.SIGTERM)
@@ -73,17 +79,45 @@ func Run(configPath string) {
 	case <-notify:
 		logger.Debug("Stop signal received")
 	case <-httpServer.Notify():
-		logger.Error("Server running error", slog.Any("message", err))
+		logger.Error("Server running error", slog.Any("msg", err.Error()))
 	}
 
 	err = httpServer.Shutdown()
 	if err != nil {
-		logger.Error("Error while shutting down the server", slog.Any("message", err.Error()))
+		logger.Error("Error while shutting down the server", slog.Any("msg", err.Error()))
 	}
 }
 
 func connectPostgres(cfg config.Postgres) (*sql.DB, error) {
 	dsn := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=disable",
 		cfg.Host, cfg.Port, cfg.DbName, cfg.Username, cfg.Password)
-	return sql.Open("postgres", dsn)
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = db.Ping(); err != nil {
+		return nil, err
+	}
+
+	return db, nil
+}
+
+func migratePostgres(db *sql.DB) error {
+	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	if err != nil {
+		return err
+	}
+
+	m, err := migrate.NewWithDatabaseInstance("file://migrations/migrate", "postgres", driver)
+	if err != nil {
+		return err
+	}
+
+	err = m.Up()
+	if err != nil && err != migrate.ErrNoChange {
+		return err
+	}
+
+	return nil
 }

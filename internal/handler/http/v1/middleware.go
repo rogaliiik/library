@@ -12,10 +12,15 @@ import (
 
 const (
 	authorizationHeader = "Authorization"
-	userCtx             = "userId"
-	requestIdCtx        = "X-Request-Id"
 
 	bearerMethod = "Bearer"
+)
+
+type header string
+
+const (
+	userCtx      header = "userId"
+	requestIdCtx header = "X-Request-Id"
 )
 
 func (h *Handler) userVerifyMiddleware(next http.Handler) http.Handler {

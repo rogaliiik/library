@@ -127,12 +127,6 @@ type statusOutput struct {
 	Status string `json:"status"`
 }
 
-type bookUpdateInput struct {
-	Name    string `json:"name"`
-	Content string `json:"content"`
-	Author  string `json:"author"`
-}
-
 // @Summary Book Update
 // @Security UserAuth
 // @Tags bookApi
